@@ -26,7 +26,7 @@ public async Task<TResult?> GetAsync<TResult>(
 
     // add just a bit of black magic
     var innerType = typeof(TResult).GetGenericArguments().FirstOrDefault();
-    if (innerType is null) // if inner type is null it means that we provide POCO type
+    if (typeof(TResult).GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEntity<>))) // if implement IEntity it means that we wont to receive single entity
     {
         var result = (await query.FirstOrDefaultAsync()) as TResult;
         return result;
