@@ -16,9 +16,10 @@ class Program
         var DbContext = new AppDbContext(options);
         DbContext.Database.EnsureCreated();
 
-        DbContext.AddData();
+        await DbContext.AddData();
+
         var repository = new Repository<Hero>(DbContext);
-        var asT0 = await repository.GetAsync(x => x.Id == 1);
-        var asT1 = await repository.GetAsync(x => x.Name.Contains("man"), null, Amount.All);
+        var asT0 = await repository.GetAsync<Hero>(x => x.Id == 1);
+        var asT1 = await repository.GetAsync<List<Hero>>(x => x.Name.Contains("man"));
     }
 }

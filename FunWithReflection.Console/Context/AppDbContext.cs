@@ -33,7 +33,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Hero>().Property(p => p.Age).IsRequired();
     }
 
-    public void AddData()
+    public async Task AddData()
     {
         var listOfHeroes = new List<Hero>
         {
@@ -44,6 +44,6 @@ public class AppDbContext : DbContext
             new Hero { Id = 5, Name = "Alyx Wance", Age = 25 }
         };
 
-        this.Set<Hero>().AddRange(listOfHeroes);
+        await this.Set<Hero>().AddRangeAsync(listOfHeroes);
     }
 }

@@ -15,13 +15,13 @@ public class Repository<TEntity> where TEntity : class
     }
 
     // this method receive as TResult only POCO class or class implemented generic IEnumerable<>
-    public async Task<OneOf<TEntity?, IEnumerable<TEntity>>> GetAsync(
+    public async Task<OneOf<TEntity?, IEnumerable<TEntity>>> GetAsync<TResult>(
                 Expression<Func<TEntity, bool>>? filter = null,
                 Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-                Amount amount = Amount.One,
-                params string[] includes)
+                params string[] includes) where TResult : class
     {
         var query = _dbSet as IQueryable<TEntity>;
+        var l = await query.ToListAsync();
 
         if (filter != null)
         {
@@ -41,16 +41,22 @@ public class Repository<TEntity> where TEntity : class
             query = orderBy(query);
         }
 
-        switch (amount)
+        // add just a bit of black magic    
+        var innerType = typeof(TResult).GetGenericArguments().FirstOrDefault();
+        if (typeof(TResult).GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEntity<>))) // if inner type is null it means that we provide POCO type    
         {
-            case Amount.One:
-                var one = await query.FirstOrDefaultAsync();
-                return one;
-            case Amount.All:
-                var all = await query.ToListAsync();
-                return all;
-            default:
-                throw new Exception("Out of bounces");
+            var result = await query.FirstOrDefaultAsync();
+            return result;
+        }
+        // else we provide generic type we must check if it derives from IEnumerable<>    
+        else if (typeof(TResult).GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+        {
+            var result = await query.ToListAsync();
+            return result;
+        }
+        else // if none of those, we don't deal with it    
+        {
+            throw new Exception($"Not supported type {typeof(TResult).Name}");
         }
     }
 }
